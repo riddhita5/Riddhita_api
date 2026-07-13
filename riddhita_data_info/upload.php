@@ -2,60 +2,59 @@
 
 include('connect.php');
 
-// Upload folder
 $upload_path = "images/";
+$upload_url = "http://".$_SERVER['SERVER_NAME']."/riddhita_data_info/".$upload_path;
 
-// Create folder if it doesn't exist
-if (!file_exists($upload_path)) {
-    mkdir($upload_path, 0777, true);
-}
+$id = $_POST["id"];
+$pname = $_POST["pname"];
+$pprice = $_POST["pprice"];
+$pdes = $_POST["pdes"];
+$pfeatures = $_POST["pfeatures"];
 
-// Get data
-$pname = $_POST['pname'];
-$pprice = $_POST['pprice'];
-$pdes = $_POST['pdes'];
-$pfeatures = $_POST['pfeatures'];
-
-// Check if image is selected
-if(isset($_FILES['pimage']))
+if($id=="" || $pname=="" || $pprice=="" || $pdes=="" || $pfeatures=="")
 {
-    $fileinfo = pathinfo($_FILES['pimage']['name']);
-    $extension = strtolower($fileinfo['extension']);
-
-    $filename = "product_" . time() . "." . $extension;
-
-    $filepath = $upload_path . $filename;
-
-    if(move_uploaded_file($_FILES['pimage']['tmp_name'], $filepath))
-    {
-        $image_url = "http://localhost/riddhita_data_info/" . $filepath;
-
-        $sql = "INSERT INTO riddhita_data_info
-                (pname,pprice,pdes,pfeatures,pimage)
-                VALUES
-                ('$pname','$pprice','$pdes','$pfeatures','$image_url')";
-
-        if(mysqli_query($con,$sql))
-        {
-            echo json_encode([
-                "status"=>1,
-                "message"=>"Product Added Successfully",
-                "image"=>$image_url
-            ]);
-        }
-        else
-        {
-            echo mysqli_error($con);
-        }
-    }
-    else
-    {
-        echo "Image Upload Failed";
-    }
+    echo "0";
 }
 else
 {
-    echo "Please Select Image";
+    if(isset($_FILES["pimage"]) && $_FILES["pimage"]["name"] != "")
+    {
+        $fileinfo = pathinfo($_FILES["pimage"]["name"]);
+        $extension = $fileinfo["extension"];
+
+        $filename = "product_".rand(1000,9999).".".$extension;
+
+        $file_path = $upload_path.$filename;
+        $file_url = $upload_url.$filename;
+
+        move_uploaded_file($_FILES["pimage"]["tmp_name"], $file_path);
+
+        $sql = "UPDATE riddhita_data_info SET
+                pname='$pname',
+                pprice='$pprice',
+                pdes='$pdes',
+                pfeatures='$pfeatures',
+                pimage='$file_url'
+                WHERE id='$id'";
+    }
+    else
+    {
+        $sql = "UPDATE riddhita_data_info SET
+                pname='$pname',
+                pprice='$pprice',
+                pdes='$pdes',
+                pfeatures='$pfeatures'
+                WHERE id='$id'";
+    }
+
+    if(mysqli_query($con, $sql))
+    {
+        echo "1";
+    }
+    else
+    {
+        echo "0";
+    }
 }
 
 mysqli_close($con);
